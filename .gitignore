@@ -31,4 +31,5 @@ Thumbs.db
 data/
 datasets/
 
-.pdf/
+# PDF
+*.pdf
