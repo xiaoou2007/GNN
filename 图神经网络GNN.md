@@ -25,3 +25,28 @@
 | Degree Matrix (D)      | 度矩阵         | 对角线上记录每个节点的度数             |
 | Gradient Propagation   | 梯度传播       | 标签信息通过图结构传播到无标签节点     |
 | Layer-wise Propagation | 分层传播       | GCN 每一层如何聚合邻居信息的规则       |
+
+| 英文                    | 中文           | 一句话理解                       |
+| ----------------------- | -------------- | -------------------------------- |
+| Graph Fourier Transform | 图傅里叶变换   | 图信号分析工具，GCN 理论基础之一 |
+| Chebyshev Polynomial    | 切比雪夫多项式 | 用来近似谱卷积，提高计算效率     |
+| Renormalization Trick   | 重归一化技巧   | 加自环再归一化，稳定训练         |
+| Self-loop               | 自环           | 节点和自己相连的一条边           |
+| Propagation Rule        | 传播规则       | GCN 每层如何更新节点表示         |
+| Hidden Representation   | 隐藏表示       | 每层输出的新节点特征             |
+| Weight Matrix           | 权重矩阵       | GCN真正学习的参数                |
+| Activation Function     | 激活函数       | ReLU等非线性函数                 |
+
+### ⭐ 核心思想
+
+GCN一层实际上做三件事：
+
+收集邻居信息
+
+↓
+
+线性变换
+
+↓
+
+激活函数
