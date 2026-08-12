@@ -33,3 +33,40 @@ datasets/
 
 # PDF
 *.pdf
+
+# 1. 虚拟环境目录（最关键，对应你截图中的文件）
+.venv/
+venv/
+env/
+ENV/
+
+# 2. Python 运行时产生的缓存文件
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 3. IDE 与编辑器配置文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 4. 图神经网络 / PyTorch / TensorFlow 训练过程产生的中间文件与模型权重
+*.pth
+*.pt
+*.ckpt
+*.h5
+*.onnx
+runs/
+logs/
+checkpoints/
+
+# 5. 数据集（如果是大型数据集或本地生成的数据，建议忽略）
+data/
+datasets/
+*.zip
+*.tar.gz
+
+# 6. 系统自生成文件
+.DS_Store
+Thumbs.db
