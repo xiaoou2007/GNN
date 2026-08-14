@@ -133,3 +133,29 @@ Chebyshev近似
 归一化
 ↓
 GCN
+
+
+
+X
+ ↓
+Dropout
+ ↓
+XW
+ ↓
+Â(XW)
+ ↓
+ReLU
+ ↓
+H¹
+ ↓
+Dropout
+ ↓
+H¹W
+ ↓
+Â(H¹W)
+ ↓
+Z
+ ↓
+Softmax
+ ↓
+节点分类
