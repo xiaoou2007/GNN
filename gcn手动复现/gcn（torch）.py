@@ -47,3 +47,32 @@ labels = torch.tensor([
 ])
 loss = F.cross_entropy(H2, labels)
 print(loss)
+
+W1 = torch.randn(2, 4, requires_grad=True)
+W2 = torch.randn(4, 2, requires_grad=True)
+optimizer = torch.optim.Adam([W1, W2], lr=0.01)
+for epoch in range(200):
+
+    # Forward
+    H1 = A_norm @ X @ W1
+    H1 = F.relu(H1)
+
+    H2 = A_norm @ H1 @ W2
+
+    # Loss
+    loss = F.cross_entropy(H2, labels)
+
+    # Backward
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+    if epoch % 10 == 0:
+        pred = H2.argmax(dim=1)
+        acc = (pred == labels).float().mean()
+
+        print(
+            f"Epoch {epoch:03d} "
+            f"Loss {loss.item():.4f} "
+            f"Acc {acc.item():.4f}"
+        )

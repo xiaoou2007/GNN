@@ -159,3 +159,62 @@ Z
 Softmax
  ↓
 节点分类
+
+
+
+
+
+
+
+## GraphSAGE
+
+| 英文                              | 真正含义                   |
+| --------------------------------- | -------------------------- |
+| Inductive Representation Learning | 学习一个生成节点表示的方法 |
+| Neighborhood Aggregation          | 聚合邻居信息               |
+| Aggregator                        | 邻居信息融合方式           |
+| Sampling                          | 限制邻居数量，提高效率     |
+| Embedding                         | 节点的低维表示             |
+| Graph Representation Learning     | 学习图中的隐藏特征         |
+| Transductive Learning             | 只能处理已有节点           |
+| Scalability                       | 能处理大规模图             |
+| Message Passing                   | 节点之间的信息传播         |
+| End-to-end Learning               | 从图到任务一起优化         |
+
+| 符号           | 含义                                                         |
+| -------------- | ------------------------------------------------------------ |
+| $z_u$          | 节点u的embedding（GraphSAGE生成的）                          |
+| $z_v$          | "正样本"节点v的embedding——v是在固定长度随机游走中与u邻近共现的节点 |
+| $z_{v_n}$      | "负样本"节点的embedding——从负采样分布 $P_n$ 中抽取           |
+| $\sigma$       | sigmoid函数，把点积结果压缩到(0,1)区间                       |
+| $Q$            | 负样本的数量                                                 |
+| $z_u^\top z_v$ | u和v两个向量的点积（dot product），衡量向量的相似度          |
+
+                 GraphSAGE
+                     │
+                     ▼
+              给节点 v 找邻居
+                     │
+                     ▼
+                Sample 邻居
+                     │
+                     ▼
+             ┌───────┴───────┐
+             │               │
+          Mean             Pool/LSTM
+             │               │
+             └───────┬───────┘
+                     ▼
+                聚合邻居信息
+                     │
+                     ▼
+       自己的信息 + 邻居的信息
+                     │
+                     ▼
+                  Linear
+                     │
+                     ▼
+                 Activation
+                     │
+                     ▼
+               新的 Node Embedding
