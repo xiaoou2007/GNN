@@ -218,3 +218,18 @@ Softmax
                      │
                      ▼
                新的 Node Embedding
+| 文件名                  | 内容说明                                                     |
+| ----------------------- | ------------------------------------------------------------ |
+| `__init__.py`           | 包初始化文件，仅包含 Python 2/3 兼容的 `future` 导入，无实际逻辑。 |
+| `inits.py`              | **权重初始化工具**。定义了 `uniform`、`glorot`、`zeros`、`ones` 等初始化函数，供各层创建参数时使用。 |
+| `layers.py`             | **基础层定义**。包含 `Layer` 基类（定义了命名、日志、变量管理等通用 API）和 `Dense` 全连接层。 |
+| `metrics.py`            | **评估指标**。定义了带 mask 的交叉熵损失（sigmoid/softmax）、L2 损失和准确率计算，用于处理变长图数据。 |
+| `aggregators.py`        | **核心：邻居聚合器**。GraphSAGE 的核心模块，实现了多种聚合策略：<br>• `MeanAggregator`（均值聚合）<br>• `GCNAggregator`（GCN 式聚合）<br>• `MaxPoolingAggregator` / `MeanPoolingAggregator`（池化聚合）<br>• `TwoMaxLayerPoolingAggregator`（双层 MLP + 池化）<br>• `SeqAggregator`（LSTM 序列聚合） |
+| `neigh_samplers.py`     | **邻居采样器**。定义 `UniformNeighborSampler`，通过从预填充的邻接表中均匀采样，为聚合器提供固定数量的邻居节点。 |
+| `prediction.py`         | **边预测层**。`BipartiteEdgePredLayer` 用于计算节点对之间的亲和力分数（affinity），支持多种损失函数（交叉熵、Skip-gram、Hinge），用于无监督链接预测。 |
+| `models.py`             | **模型框架与无监督模型**。包含：<br>• `Model` / `GeneralizedModel` 基类<br>• `MLP` 基准模型<br>• `SampleAndAggregate`（无监督 GraphSAGE 主模型，包含 sample + aggregate 的递归邻居聚合逻辑）<br>• `Node2VecModel`（用于对比的 Node2Vec/DeepWalk 实现） |
+| `supervised_models.py`  | **监督模型**。`SupervisedGraphsage` 继承自 `SampleAndAggregate`，在节点嵌入后接 `Dense` 分类层，用于节点分类任务。 |
+| `minibatch.py`          | **数据迭代器**。定义了两种 minibatch 生成器：<br>• `EdgeMinibatchIterator`：用于无监督/链接预测任务，按边采样<br>• `NodeMinibatchIterator`：用于监督/节点分类任务，按节点采样<br>同时负责构建邻接表（`construct_adj`）和划分 train/val/test。 |
+| `utils.py`              | **数据加载与随机游走工具**。`load_data` 负责读取 NetworkX 图、特征、id 映射、标签等；`run_random_walks` 生成 Node2Vec 所需的节点共现对。 |
+| `supervised_train.py`   | **监督训练脚本**。完整的训练流程：构建 placeholder、创建模型、训练循环、验证/测试评估（F1 分数）、日志记录。命令行入口。 |
+| `unsupervised_train.py` | **无监督训练脚本**。完整的训练流程：构建 placeholder、创建模型、训练循环、验证评估（MRR 指标）、保存节点嵌入。支持 n2v 再训练模式。 |
