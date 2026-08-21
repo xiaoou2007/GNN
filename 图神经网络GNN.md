@@ -233,3 +233,86 @@ Softmax
 | `utils.py`              | **数据加载与随机游走工具**。`load_data` 负责读取 NetworkX 图、特征、id 映射、标签等；`run_random_walks` 生成 Node2Vec 所需的节点共现对。 |
 | `supervised_train.py`   | **监督训练脚本**。完整的训练流程：构建 placeholder、创建模型、训练循环、验证/测试评估（F1 分数）、日志记录。命令行入口。 |
 | `unsupervised_train.py` | **无监督训练脚本**。完整的训练流程：构建 placeholder、创建模型、训练循环、验证评估（MRR 指标）、保存节点嵌入。支持 n2v 再训练模式。 |
+
+         nodes
+           │
+           ↓
+     找到邻居 adj_lists
+           │
+           ↓
+     aggregator
+           │
+           ↓
+    邻居平均特征
+           │
+           ├──────────────┐
+           ↓              ↓
+     neigh_feats      self_feats
+           │              │
+           └──────┬───────┘
+                  ↓
+                cat
+                  ↓
+             combined
+                  ↓
+               W × h
+                  ↓
+                ReLU
+                  ↓
+              embedding
+              
+              
+              
+              
+              
+              
+                  Cora
+                   │
+       ┌───────────┼───────────┐
+       ↓           ↓           ↓
+    features     graph       labels
+       │           │           │
+       │       adj_lists       │
+       │           │           │
+       └──────┬────┘           │
+              ↓                │
+          Encoder 1            │
+              ↓                │
+        第一层 embedding       │
+              ↓                │
+          Encoder 2            │
+              ↓                │
+        第二层 embedding       │
+              ↓                │
+           Classifier ←────────┘
+              ↓
+           logits
+              ↓
+      CrossEntropyLoss
+              ↓
+             loss
+              ↓
+       backward()
+              ↓
+       optimizer.step()
+X
+ ↓
+邻居聚合
+ ↓
+Linear(W¹)
+ ↓
+ReLU
+ ↓
+邻居聚合
+ ↓
+Linear(W²)
+ ↓
+ReLU
+ ↓
+Classifier
+ ↓
+Loss
+ ↓
+Backprop
+ ↓
+更新 W¹ W²
