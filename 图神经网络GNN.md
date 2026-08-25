@@ -330,3 +330,11 @@ Backprop
                          ├→ 拼接 → aᵀ → LeakyReLU → score
                          │
 节点 j ──→ W ──→ Whⱼ ──┘
+
+
+
+| 方法      | 邻居权重            | 聚合              |
+| --------- | ------------------- | ----------------- |
+| GCN       | 固定归一化          | sum/mean          |
+| GraphSAGE | 人工设计 aggregator | mean/LSTM/pooling |
+| GAT       | 学习 attention      | weighted sum      |
