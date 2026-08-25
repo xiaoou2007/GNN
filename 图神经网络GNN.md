@@ -316,3 +316,17 @@ Loss
 Backprop
  ↓
 更新 W¹ W²
+
+
+
+
+
+
+
+## GAT
+
+节点 i ──→ W ──→ Whᵢ ──┐
+                         │
+                         ├→ 拼接 → aᵀ → LeakyReLU → score
+                         │
+节点 j ──→ W ──→ Whⱼ ──┘
