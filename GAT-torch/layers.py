@@ -3,7 +3,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 class GraphAttentionLayer(nn.Module):
     """
     Simple GAT layer, similar to https://arxiv.org/abs/1710.10903
@@ -24,10 +23,21 @@ class GraphAttentionLayer(nn.Module):
         self.leakyrelu = nn.LeakyReLU(self.alpha)
 
     def forward(self, h, adj):
-        Wh = torch.mm(h, self.W) # h.shape: (N, in_features), Wh.shape: (N, out_features)
-        e = self._prepare_attentional_mechanism_input(Wh)
+        """
+        h: (N, in_features)
+        adj: sparse matrix with shape (N, N) OR dense matrix
+        """
+        Wh = torch.mm(h, self.W)  # h.shape: (N, in_features), Wh.shape: (N, out_features)
+        a_input = self._prepare_attentional_mechanism_input(Wh)
+        e = self.leakyrelu(torch.matmul(a_input, self.a).squeeze(2))
 
-        zero_vec = -9e15*torch.ones_like(e)
+        # --- 新增修复代码开始 ---
+        # 如果 adj 是稀疏张量，转换为稠密张量以支持 torch.where 和 > 操作
+        if adj.is_sparse:
+            adj = adj.to_dense()
+        # --- 新增修复代码结束 ---
+
+        zero_vec = -9e15 * torch.ones_like(e)
         attention = torch.where(adj > 0, e, zero_vec)
         attention = F.softmax(attention, dim=1)
         attention = F.dropout(attention, self.dropout, training=self.training)
@@ -39,15 +49,25 @@ class GraphAttentionLayer(nn.Module):
             return h_prime
 
     def _prepare_attentional_mechanism_input(self, Wh):
-        # Wh.shape (N, out_feature)
-        # self.a.shape (2 * out_feature, 1)
-        # Wh1&2.shape (N, 1)
-        # e.shape (N, N)
-        Wh1 = torch.matmul(Wh, self.a[:self.out_features, :])
-        Wh2 = torch.matmul(Wh, self.a[self.out_features:, :])
-        # broadcast add
-        e = Wh1 + Wh2.T
-        return self.leakyrelu(e)
+        N = Wh.size()[0] # number of nodes
+
+        # Below, two matrices are created that contain embeddings in their rows in different orders.
+        # These are the rows of the first matrix (Wh_repeated_in_chunks):
+        # [node1, node1, node1, ..., node2, node2, node2, ..., nodeN, nodeN, nodeN]
+        # These are the rows of the second matrix (Wh_repeated_alternating):
+        # [node1, node2, ..., nodeN, node1, node2, ..., nodeN, ..., node1, node2, ..., nodeN]
+        # The purpose is to compute the attention coefficients for all pairs of nodes.
+
+        Wh_repeated_in_chunks = Wh.repeat_interleave(N, dim=0)
+        Wh_repeated_alternating = Wh.repeat(N, 1)
+
+        # Wh_repeated_in_chunks.shape == Wh_repeated_alternating.shape == (N * N, out_features)
+
+        # The all_combination_matrix, created below, will be the input to the attention mechanism.
+        all_combinations_matrix = torch.cat([Wh_repeated_in_chunks, Wh_repeated_alternating], dim=1)
+        # all_combinations_matrix.shape == (N * N, 2 * out_features)
+
+        return all_combinations_matrix.view(N, N, 2 * self.out_features)
 
     def __repr__(self):
         return self.__class__.__name__ + ' (' + str(self.in_features) + ' -> ' + str(self.out_features) + ')'
@@ -80,7 +100,7 @@ class SpecialSpmm(nn.Module):
     def forward(self, indices, values, shape, b):
         return SpecialSpmmFunction.apply(indices, values, shape, b)
 
-    
+
 class SpGraphAttentionLayer(nn.Module):
     """
     Sparse version GAT layer, similar to https://arxiv.org/abs/1710.10903
@@ -90,16 +110,17 @@ class SpGraphAttentionLayer(nn.Module):
         super(SpGraphAttentionLayer, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
+        self.dropout = dropout
         self.alpha = alpha
         self.concat = concat
 
         self.W = nn.Parameter(torch.zeros(size=(in_features, out_features)))
         nn.init.xavier_normal_(self.W.data, gain=1.414)
-                
+
         self.a = nn.Parameter(torch.zeros(size=(1, 2*out_features)))
         nn.init.xavier_normal_(self.a.data, gain=1.414)
 
-        self.dropout = nn.Dropout(dropout)
+        self.dropout = nn.Dropout(self.dropout)
         self.leakyrelu = nn.LeakyReLU(self.alpha)
         self.special_spmm = SpecialSpmm()
 
@@ -121,7 +142,7 @@ class SpGraphAttentionLayer(nn.Module):
         assert not torch.isnan(edge_e).any()
         # edge_e: E
 
-        e_rowsum = self.special_spmm(edge, edge_e, torch.Size([N, N]), torch.ones(size=(N,1), device=dv))
+        e_rowsum = torch.sparse_coo_tensor(edge, edge_e, (N, N)).sum(dim=1).to_dense()
         # e_rowsum: N x 1
 
         edge_e = self.dropout(edge_e)
@@ -130,10 +151,10 @@ class SpGraphAttentionLayer(nn.Module):
         h_prime = self.special_spmm(edge, edge_e, torch.Size([N, N]), h)
         assert not torch.isnan(h_prime).any()
         # h_prime: N x out
-        
-        h_prime = h_prime.div(e_rowsum)
-        # h_prime: N x out
+
+        h_prime = h_prime.div(e_rowsum.unsqueeze(1).expand(N, self.out_features))
         assert not torch.isnan(h_prime).any()
+        # h_prime: N x out
 
         if self.concat:
             # if this layer is not last layer,
