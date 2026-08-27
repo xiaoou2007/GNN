@@ -338,3 +338,17 @@ Backprop
 | GCN       | 固定归一化          | sum/mean          |
 | GraphSAGE | 人工设计 aggregator | mean/LSTM/pooling |
 | GAT       | 学习 attention      | weighted sum      |
+
+| 论文                 | 代码                                      |
+| -------------------- | ----------------------------------------- |
+| WkW^k                | `GraphAttentionLayer` 中的参数            |
+| aka^k                | `GraphAttentionLayer` 中的 attention 参数 |
+| αijk\alpha_{ij}^k    | `GraphAttentionLayer` 内计算              |
+| 公式 (4)             | **一个 GraphAttentionLayer**              |
+| KK heads             | `self.attentions`                         |
+| ∥\Vert               | `torch.cat()`                             |
+| 公式 (5)             | `torch.cat([att(x,adj) ...])`             |
+| KF′KF'               | `nhid * nheads`                           |
+| 最终 attention layer | `self.out_att`                            |
+| 公式 (6)             | `out_att` 的 `concat=False` 分支          |
+| 最终分类             | `F.log_softmax()`                         |
